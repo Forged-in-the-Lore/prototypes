@@ -1,0 +1,187 @@
+{
+	"info": {
+		"_postman_id": "6b91ab74-f3f8-4f6d-be39-f94bcf50f074",
+		"name": "Requests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Test Inter Service Auth",
+			"item": [
+				{
+					"name": "Test Token Validation",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_man_url}}/hello",
+							"host": [
+								"{{base_man_url}}"
+							],
+							"path": [
+								"hello"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Test User Id Returned",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_man_url}}/me",
+							"host": [
+								"{{base_man_url}}"
+							],
+							"path": [
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Test Wrong Token",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "BAD_TOKEN",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_man_url}}/me",
+							"host": [
+								"{{base_man_url}}"
+							],
+							"path": [
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Test No Token",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_man_url}}/me",
+							"host": [
+								"{{base_man_url}}"
+							],
+							"path": [
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Login",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"pm.collectionVariables.set('access_token', response.token);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userName\": \"david\",\n  \"password\": \"Passw0rd!\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_auth_url}}/account/login",
+					"host": [
+						"{{base_auth_url}}"
+					],
+					"path": [
+						"account",
+						"login"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.request.headers.add({key: 'X-Requested-With', value: 'XMLHttpRequest' });"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "base_auth_url",
+			"value": "https://localhost:7094/api"
+		},
+		{
+			"key": "base_man_url",
+			"value": "http://localhost:8000"
+		}
+	]
+}

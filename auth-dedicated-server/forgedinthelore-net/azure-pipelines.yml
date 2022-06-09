@@ -1,0 +1,84 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+- dev
+ 
+pool:
+  vmImage: 'ubuntu-latest'
+ 
+variables:
+  buildConfiguration: 'Release'
+  projectName: 'forgedinthelore-auth-api'
+ 
+
+stages:
+- stage: CI
+  jobs:
+    - job: UnitTests
+      steps:
+        - task: DotNetCoreCLI@2
+          inputs:
+            command: 'restore'
+            projects: '**/$(projectName)*.csproj'
+          displayName: 'Restore Nuget Packages'
+        - task: SonarCloudPrepare@1
+          inputs:
+            SonarCloud: 'SonarCloud'
+            organization: 'oibss-f'
+            scannerMode: 'MSBuild'
+            projectKey: 'OIBSS-F_Forged-In-The-Lore'
+            projectName: 'Forged In The Lore'
+        - task: DotNetCoreCLI@2
+          inputs:
+            command: 'build'
+            projects: '**/$(projectName)*.csproj'
+            arguments: '--no-restore'
+          displayName: 'Build projects'
+          
+        - task: SonarCloudAnalyze@1
+        - task: SonarCloudPublish@1
+          inputs:
+            pollingTimeoutSec: '300'
+
+        - task: DotNetCoreCLI@2
+          inputs:
+            command: 'test'
+            projects: '**/*-test.csproj'
+            arguments: '--no-restore --no-build'
+          displayName: 'Run Tests'
+    - job: IntegrationTests
+      dependsOn:
+        - UnitTests
+      condition: succeeded()
+      steps:
+        - task: DotNetCoreCLI@2
+          inputs:
+            command: 'restore'
+            projects: '**/$(projectName)*.csproj'
+          displayName: 'Restore Nuget Packages'
+          
+          #TODO: Add database dependency if we want to test that
+        
+        - task: DotNetCoreCLI@2
+          inputs:
+            command: 'test'
+            projects: '**/*-inttest.csproj'
+            arguments: '--no-restore --no-build'
+          displayName: 'Run Tests'
+- stage: CD
+  dependsOn:
+    - CI
+  condition: succeeded()
+  jobs:
+    - job: Deliver
+      steps:
+        - task: Docker@2
+          inputs:
+            containerRegistry: 'docker-hub'
+            repository: 'davidhellinga/forgedinthelore'
+            command: 'buildAndPush'
+            Dockerfile: '**/forgedinthelore/Dockerfile'
